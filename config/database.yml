@@ -19,7 +19,6 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
-
 development:
   <<: *default
   database: numacros_api_development
@@ -81,9 +80,10 @@ test:
 production:
   primary: &primary_production
     <<: *default
+    host: numacros_api-db
     database: numacros_api_production
     username: numacros_api
-    password: <%= ENV["NUMACROS_API_DATABASE_PASSWORD"] %>
+    password: <%= ENV["POSTGRES_PASSWORD"] %>
   cache:
     <<: *primary_production
     database: numacros_api_production_cache
