@@ -1,6 +1,14 @@
 module Api
   module V1
     class EmailSubscriptionsController < ApplicationController
+      include AdminAuthenticatable
+      skip_before_action :authenticate_admin!, only: [:create]
+
+      def index
+        @subscriptions = EmailSubscription.all
+        render json: @subscriptions
+      end
+
       def create
         @subscription = EmailSubscription.new(email_subscription_params)
 
@@ -9,6 +17,14 @@ module Api
         else
           render json: { errors: @subscription.errors.full_messages }, status: :unprocessable_entity
         end
+      end
+
+      def destroy
+        @subscription = EmailSubscription.find(params[:id])
+        @subscription.destroy
+        head :no_content
+      rescue ActiveRecord::RecordNotFound
+        head :not_found
       end
 
       private

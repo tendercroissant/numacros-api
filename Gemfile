@@ -51,4 +51,7 @@ group :development, :test do
   # Testing
   gem 'rspec-rails'
   gem 'factory_bot_rails'
+  
+  # Environment variable management
+  gem 'dotenv-rails'
 end
