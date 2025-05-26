@@ -20,7 +20,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       credentials: true
 
     # Email subscription endpoints
-    resource '/api/v1/email_subscriptions',
+    resource '/api/v1/email_subscriptions*',
       headers: :any,
       methods: [:get, :post, :delete, :options],
       credentials: true
