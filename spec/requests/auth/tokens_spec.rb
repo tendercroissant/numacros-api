@@ -1,14 +1,14 @@
 require 'rails_helper'
 
-RSpec.describe "Auth::Tokens", type: :request do
+RSpec.describe "Api::V1::Auth::Tokens", type: :request do
   let(:user) { create(:user) }
   
-  describe "POST /auth/refresh_token" do
+  describe "POST /api/v1/auth/refresh_token" do
     context "with valid refresh token" do
       let(:refresh_token) { create(:refresh_token, user: user) }
       
       it "returns new access token" do
-        post "/auth/refresh_token", params: { refresh_token: refresh_token.token }, as: :json
+        post "/api/v1/auth/refresh_token", params: { refresh_token: refresh_token.token }, as: :json
         
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -19,7 +19,7 @@ RSpec.describe "Auth::Tokens", type: :request do
       end
 
       it "returns valid JWT access token" do
-        post "/auth/refresh_token", params: { refresh_token: refresh_token.token }, as: :json
+        post "/api/v1/auth/refresh_token", params: { refresh_token: refresh_token.token }, as: :json
         json_response = JSON.parse(response.body)
         
         decoded_token = JwtService.decode(json_response['access_token'])
@@ -29,7 +29,7 @@ RSpec.describe "Auth::Tokens", type: :request do
 
     context "with invalid refresh token" do
       it "returns unauthorized for non-existent token" do
-        post "/auth/refresh_token", params: { refresh_token: "invalid-token" }, as: :json
+        post "/api/v1/auth/refresh_token", params: { refresh_token: "invalid-token" }, as: :json
         
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -38,7 +38,7 @@ RSpec.describe "Auth::Tokens", type: :request do
 
       it "returns unauthorized for expired token" do
         expired_token = create(:refresh_token, user: user, expires_at: 1.hour.ago)
-        post "/auth/refresh_token", params: { refresh_token: expired_token.token }, as: :json
+        post "/api/v1/auth/refresh_token", params: { refresh_token: expired_token.token }, as: :json
         
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -46,7 +46,7 @@ RSpec.describe "Auth::Tokens", type: :request do
       end
 
       it "returns unauthorized when no token provided" do
-        post "/auth/refresh_token", params: {}, as: :json
+        post "/api/v1/auth/refresh_token", params: {}, as: :json
         
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -55,7 +55,7 @@ RSpec.describe "Auth::Tokens", type: :request do
     end
   end
 
-  describe "DELETE /auth/logout_all" do
+  describe "DELETE /api/v1/auth/logout_all" do
     let(:access_token) { JwtService.generate_access_token(user) }
     let(:auth_headers) { { 'Authorization' => "Bearer #{access_token}" } }
 
@@ -66,12 +66,12 @@ RSpec.describe "Auth::Tokens", type: :request do
 
       it "deletes all refresh tokens for the user" do
         expect {
-          delete "/auth/logout_all", headers: auth_headers, as: :json
+          delete "/api/v1/auth/logout_all", headers: auth_headers, as: :json
         }.to change { user.refresh_tokens.count }.from(3).to(0)
       end
 
       it "returns success message" do
-        delete "/auth/logout_all", headers: auth_headers, as: :json
+        delete "/api/v1/auth/logout_all", headers: auth_headers, as: :json
         
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -82,7 +82,7 @@ RSpec.describe "Auth::Tokens", type: :request do
         other_user = create(:user)
         other_user_token = create(:refresh_token, user: other_user)
         
-        delete "/auth/logout_all", headers: auth_headers, as: :json
+        delete "/api/v1/auth/logout_all", headers: auth_headers, as: :json
         
         expect(RefreshToken.exists?(other_user_token.id)).to be true
       end
@@ -90,7 +90,7 @@ RSpec.describe "Auth::Tokens", type: :request do
 
     context "without authentication" do
       it "returns unauthorized" do
-        delete "/auth/logout_all", as: :json
+        delete "/api/v1/auth/logout_all", as: :json
         
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -100,7 +100,7 @@ RSpec.describe "Auth::Tokens", type: :request do
 
     context "with invalid token" do
       it "returns unauthorized" do
-        delete "/auth/logout_all", headers: { 'Authorization' => "Bearer invalid-token" }, as: :json
+        delete "/api/v1/auth/logout_all", headers: { 'Authorization' => "Bearer invalid-token" }, as: :json
         
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)

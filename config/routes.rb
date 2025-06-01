@@ -1,15 +1,18 @@
 Rails.application.routes.draw do
-  namespace :auth do
-    post 'signup', to: 'registrations#create'
-    post 'login', to: 'sessions#create'
-    post 'refresh_token', to: 'tokens#refresh'
-    delete 'logout_all', to: 'tokens#logout_all'
-  end
-
   namespace :api do
     namespace :v1 do
+      namespace :auth do
+        post 'signup', to: 'registrations#create'
+        post 'login', to: 'sessions#create'
+        post 'refresh_token', to: 'tokens#refresh'
+        delete 'logout_all', to: 'tokens#logout_all'
+      end
+      
       resources :email_subscriptions, only: [:create, :index, :destroy]
       resources :waitlists, only: [:create]
+      
+      get 'profile', to: 'profile#show'
+      put 'profile', to: 'profile#update'
     end
   end
 
