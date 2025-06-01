@@ -30,7 +30,7 @@ module Api
       private
 
       def email_subscription_params
-        params.require(:email_subscription).permit(:email, :name)
+        params.require(:email_subscription).permit(:email)
       end
     end
   end
