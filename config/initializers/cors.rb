@@ -8,21 +8,15 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     if Rails.env.development?
-      origins 'http://localhost:3000'
+      # Allow all origins in development for easier local testing (including iOS simulator/device)
+      origins '*'
     else
       origins 'https://numacros.com'
     end
 
-    # Admin authentication endpoint
-    resource '/admin/login',
+    resource '*',
       headers: :any,
-      methods: [:post, :options],
-      credentials: true
-
-    # Email subscription endpoints
-    resource '/api/v1/email_subscriptions*',
-      headers: :any,
-      methods: [:get, :post, :delete, :options],
-      credentials: true
+      methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      credentials: false
   end
 end
