@@ -14,9 +14,28 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       origins 'https://numacros.com'
     end
 
-    resource '*',
+    # Admin authentication endpoint - requires credentials
+    resource '/admin/login',
       headers: :any,
-      methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      methods: [:post, :options],
+      credentials: true
+
+    # Email subscription endpoints - requires credentials for admin operations
+    resource '/api/v1/email_subscriptions*',
+      headers: :any,
+      methods: [:get, :post, :delete, :options],
+      credentials: true
+
+    # Public email subscription creation (no credentials needed)
+    resource '/api/v1/email_subscriptions',
+      headers: :any,
+      methods: [:post, :options],
+      credentials: false
+
+    # Auth endpoints (user authentication)
+    resource '/auth/*',
+      headers: :any,
+      methods: [:post, :delete, :options],
       credentials: false
   end
 end
