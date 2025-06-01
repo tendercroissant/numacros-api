@@ -8,8 +8,10 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     if Rails.env.development?
-      # Allow all origins in development for easier local testing (including iOS simulator/device)
-      origins '*'
+      # Allow localhost origins for web development
+      origins 'http://localhost:3000',
+              'http://127.0.0.1:3000',
+              'http://192.168.1.28:3000'
     else
       origins 'https://numacros.com'
     end
