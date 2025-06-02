@@ -3,7 +3,7 @@ class UserProfile < ApplicationRecord
   has_one :macronutrient_target, dependent: :destroy
 
   # Lifecycle hooks
-  after_save :calculate_and_store_macronutrients, if: :nutrition_affecting_change?
+  after_save :calculate_and_store_macronutrients, if: :should_calculate_macros?
 
   # Enums
   enum :gender, { male: 0, female: 1 }
@@ -20,7 +20,7 @@ class UserProfile < ApplicationRecord
     maintain_weight: 1, 
     build_muscle: 2 
   }
-  enum :dietary_type, {
+  enum :diet_type, {
     balanced: 0,
     low_carb: 1,
     keto: 2,
@@ -28,24 +28,23 @@ class UserProfile < ApplicationRecord
     paleo: 4,
     vegetarian: 5,
     vegan: 6,
-    mediterranean: 7,
-    custom: 8
+    mediterranean: 7
   }
 
   # Validations
+  validates :name, presence: true, length: { minimum: 2, maximum: 50 }, format: { with: /\A[\p{L}\s\-'.]+\z/, message: "can only contain letters, spaces, hyphens, apostrophes, and periods" }
   validates :birth_date, presence: true
   validates :gender, presence: true
-  validates :weight_kg, presence: true, numericality: { greater_than: 30 }
   validates :height_cm, presence: true, numericality: { greater_than: 100 }
   validates :unit_system, presence: true
   validates :activity_level, presence: true
   validates :weight_goal_type, presence: true
   validates :weight_goal_rate, presence: true, inclusion: { in: [0.0, 0.5, 1.0, 2.0] }
-  validates :dietary_type, presence: true
+  validates :diet_type, presence: true
 
   validate :minimum_age_requirement
   validate :weight_goal_rate_compatibility
-  validate :custom_macro_percentages_when_custom
+  validate :has_current_weight
 
   # Activity level multipliers for TDEE calculation
   ACTIVITY_MULTIPLIERS = {
@@ -74,6 +73,11 @@ class UserProfile < ApplicationRecord
     protein: 4,
     fat: 9
   }.freeze
+
+  # Weight-related methods
+  def weight_kg
+    user.current_weight_kg
+  end
 
   # Calculation methods (still available for immediate calculations)
   def age
@@ -113,18 +117,8 @@ class UserProfile < ApplicationRecord
 
   # Macronutrient calculations
   def macro_percentages
-    return nil unless dietary_type.present?
-    
-    if dietary_type == 'custom'
-      return nil unless custom_carbs_percent.present? && custom_protein_percent.present? && custom_fat_percent.present?
-      {
-        carbs: custom_carbs_percent,
-        protein: custom_protein_percent,
-        fat: custom_fat_percent
-      }
-    else
-      DIETARY_MACROS[dietary_type]
-    end
+    return nil unless diet_type.present?
+    DIETARY_MACROS[diet_type]
   end
 
   def carbs_calories
@@ -201,67 +195,6 @@ class UserProfile < ApplicationRecord
     [feet, inches]
   end
 
-  private
-
-  def minimum_age_requirement
-    return unless birth_date.present?
-    
-    calculated_age = Date.current.year - birth_date.year
-    calculated_age -= 1 if Date.current < birth_date + calculated_age.years
-    
-    errors.add(:birth_date, 'must indicate user is at least 13 years old') if calculated_age < 13
-  end
-
-  def weight_goal_rate_compatibility
-    return unless weight_goal_type.present? && weight_goal_rate.present?
-
-    case weight_goal_type
-    when 'maintain_weight'
-      errors.add(:weight_goal_rate, 'must be 0.0 when maintaining weight') unless weight_goal_rate == 0.0
-    when 'lose_weight'
-      unless [0.5, 1.0, 2.0].include?(weight_goal_rate)
-        errors.add(:weight_goal_rate, 'must be 0.5, 1.0, or 2.0 when losing weight')
-      end
-    when 'build_muscle'
-      unless [0.5, 1.0].include?(weight_goal_rate)
-        errors.add(:weight_goal_rate, 'must be 0.5 or 1.0 when building muscle')
-      end
-    end
-  end
-
-  def custom_macro_percentages_when_custom
-    return unless dietary_type == 'custom'
-    
-    unless custom_carbs_percent.present? && custom_protein_percent.present? && custom_fat_percent.present?
-      errors.add(:base, 'Custom macro percentages are required when dietary type is custom')
-      return
-    end
-
-    total = custom_carbs_percent + custom_protein_percent + custom_fat_percent
-    unless total == 100.0
-      errors.add(:base, 'Custom macro percentages must add up to 100%')
-    end
-
-    if custom_carbs_percent < 0 || custom_protein_percent < 0 || custom_fat_percent < 0
-      errors.add(:base, 'Custom macro percentages must be positive')
-    end
-  end
-
-  # Check if any nutrition-affecting fields changed
-  def nutrition_affecting_change?
-    saved_change_to_weight_kg? ||
-    saved_change_to_height_cm? ||
-    saved_change_to_birth_date? ||
-    saved_change_to_gender? ||
-    saved_change_to_activity_level? ||
-    saved_change_to_weight_goal_type? ||
-    saved_change_to_weight_goal_rate? ||
-    saved_change_to_dietary_type? ||
-    saved_change_to_custom_carbs_percent? ||
-    saved_change_to_custom_protein_percent? ||
-    saved_change_to_custom_fat_percent?
-  end
-
   # Calculate and store macronutrients in the target table
   def calculate_and_store_macronutrients
     return unless profile_complete_for_calculations?
@@ -292,16 +225,55 @@ class UserProfile < ApplicationRecord
     activity_level.present? &&
     weight_goal_type.present? &&
     weight_goal_rate.present? &&
-    dietary_type.present? &&
-    (dietary_type != 'custom' || (custom_carbs_percent.present? && custom_protein_percent.present? && custom_fat_percent.present?))
+    diet_type.present?
   end
 
-  # For gradual migration - these fields will be required for new profiles
-  def weight_kg_required?
-    new_record? || weight_kg.present? || height_cm.present?
+  private
+
+  def minimum_age_requirement
+    return unless birth_date.present?
+    
+    calculated_age = Date.current.year - birth_date.year
+    calculated_age -= 1 if Date.current < birth_date + calculated_age.years
+    
+    errors.add(:birth_date, 'must indicate user is at least 18 years old') if calculated_age < 18
   end
 
-  def height_cm_required?
-    new_record? || weight_kg.present? || height_cm.present?
+  def weight_goal_rate_compatibility
+    return unless weight_goal_type.present? && weight_goal_rate.present?
+
+    case weight_goal_type
+    when 'maintain_weight'
+      errors.add(:weight_goal_rate, 'must be 0.0 when maintaining weight') unless weight_goal_rate == 0.0
+    when 'lose_weight'
+      unless [0.5, 1.0, 2.0].include?(weight_goal_rate)
+        errors.add(:weight_goal_rate, 'must be 0.5, 1.0, or 2.0 when losing weight')
+      end
+    when 'build_muscle'
+      unless [0.5, 1.0].include?(weight_goal_rate)
+        errors.add(:weight_goal_rate, 'must be 0.5 or 1.0 when building muscle')
+      end
+    end
+  end
+
+  def has_current_weight
+    unless user&.current_weight_kg.present?
+      errors.add(:base, 'User must have a current weight recorded')
+    end
+  end
+
+  # Check if we should calculate macros - on field changes or initial creation with complete data
+  def should_calculate_macros?
+    # Always calculate on creation if profile is complete
+    return profile_complete_for_calculations? if saved_change_to_id?
+    
+    # Or if any nutrition-affecting fields changed
+    saved_change_to_height_cm? ||
+    saved_change_to_birth_date? ||
+    saved_change_to_gender? ||
+    saved_change_to_activity_level? ||
+    saved_change_to_weight_goal_type? ||
+    saved_change_to_weight_goal_rate? ||
+    saved_change_to_diet_type?
   end
 end

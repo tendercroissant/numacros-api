@@ -9,10 +9,15 @@ Rails.application.routes.draw do
       end
       
       resources :email_subscriptions, only: [:create, :index, :destroy]
-      resources :waitlists, only: [:create]
       
       get 'profile', to: 'profile#show'
       put 'profile', to: 'profile#update'
+      
+      resources :weights, only: [:index, :create, :destroy] do
+        collection do
+          get :current
+        end
+      end
     end
   end
 

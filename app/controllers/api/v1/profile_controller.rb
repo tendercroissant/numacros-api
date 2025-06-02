@@ -10,16 +10,12 @@ class Api::V1::ProfileController < ApplicationController
         name: profile.name,
         birth_date: profile.birth_date,
         gender: profile.gender,
-        weight_kg: profile.weight_kg,
         height_cm: profile.height_cm,
         unit_system: profile.unit_system,
         activity_level: profile.activity_level,
         weight_goal_type: profile.weight_goal_type,
         weight_goal_rate: profile.weight_goal_rate,
-        dietary_type: profile.dietary_type,
-        custom_carbs_percent: profile.custom_carbs_percent,
-        custom_protein_percent: profile.custom_protein_percent,
-        custom_fat_percent: profile.custom_fat_percent,
+        diet_type: profile.diet_type,
         calculations: {
           age: profile.age,
           bmr: profile.bmr,
@@ -82,22 +78,15 @@ class Api::V1::ProfileController < ApplicationController
 
   def profile_params
     params.require(:profile).permit(
-      :name, :birth_date, :gender, :weight_kg, :height_cm, :unit_system,
-      :activity_level, :weight_goal_type, :weight_goal_rate, :dietary_type,
-      :custom_carbs_percent, :custom_protein_percent, :custom_fat_percent,
+      :name, :birth_date, :gender, :height_cm, :unit_system,
+      :activity_level, :weight_goal_type, :weight_goal_rate, :diet_type,
       # Imperial input fields
-      :weight, :height_feet, :height_inches
+      :height_feet, :height_inches
     )
   end
 
   def convert_imperial_if_needed(params)
     converted_params = params.dup
-
-    # Convert imperial weight to metric
-    if params[:weight].present?
-      converted_params[:weight_kg] = UserProfile.pounds_to_kg(params[:weight].to_f)
-      converted_params.delete(:weight)
-    end
 
     # Convert imperial height to metric
     if params[:height_feet].present? && params[:height_inches].present?

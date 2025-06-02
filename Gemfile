@@ -51,11 +51,15 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
-  # Testing
+  # Testing framework
   gem 'rspec-rails'
   gem 'factory_bot_rails'
   gem 'shoulda-matchers'
   
   # Environment variable management
   gem 'dotenv-rails'
+end
+
+group :development do
+  # No additional gems needed
 end

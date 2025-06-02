@@ -21,18 +21,18 @@ RSpec.describe MacronutrientTarget, type: :model do
     it 'creates a valid macronutrient_target' do
       # Create profile manually to avoid lifecycle hooks
       user = create(:user)
+      create(:weight, user: user, weight_kg: 70)
       profile = UserProfile.create!(
         user: user,
         name: "Test User",
         birth_date: "1990-01-01",
         gender: :male,
-        weight_kg: 70,
         height_cm: 175,
         unit_system: :metric,
         activity_level: :sedentary,
         weight_goal_type: :maintain_weight,
         weight_goal_rate: 0.0,
-        dietary_type: :balanced
+        diet_type: :balanced
       )
       # Remove the auto-created target
       profile.macronutrient_target&.destroy
@@ -43,18 +43,18 @@ RSpec.describe MacronutrientTarget, type: :model do
 
     it 'creates high_calorie variant' do
       user = create(:user)
+      create(:weight, user: user, weight_kg: 70)
       profile = UserProfile.create!(
         user: user,
         name: "Test User",
         birth_date: "1990-01-01",
         gender: :male,
-        weight_kg: 70,
         height_cm: 175,
         unit_system: :metric,
         activity_level: :sedentary,
         weight_goal_type: :maintain_weight,
         weight_goal_rate: 0.0,
-        dietary_type: :balanced
+        diet_type: :balanced
       )
       profile.macronutrient_target&.destroy
       
@@ -64,18 +64,18 @@ RSpec.describe MacronutrientTarget, type: :model do
 
     it 'creates low_carb variant' do
       user = create(:user)
+      create(:weight, user: user, weight_kg: 70)
       profile = UserProfile.create!(
         user: user,
         name: "Test User",
         birth_date: "1990-01-01",
         gender: :male,
-        weight_kg: 70,
         height_cm: 175,
         unit_system: :metric,
         activity_level: :sedentary,
         weight_goal_type: :maintain_weight,
         weight_goal_rate: 0.0,
-        dietary_type: :balanced
+        diet_type: :balanced
       )
       profile.macronutrient_target&.destroy
       
@@ -118,18 +118,18 @@ RSpec.describe MacronutrientTarget, type: :model do
   describe 'database constraints' do
     it 'enforces unique user_profile constraint' do
       user = create(:user)
+      create(:weight, user: user, weight_kg: 70)
       profile = UserProfile.create!(
         user: user,
         name: "Test User",
         birth_date: "1990-01-01",
         gender: :male,
-        weight_kg: 70,
         height_cm: 175,
         unit_system: :metric,
         activity_level: :sedentary,
         weight_goal_type: :maintain_weight,
         weight_goal_rate: 0.0,
-        dietary_type: :balanced
+        diet_type: :balanced
       )
       profile.macronutrient_target&.destroy
       

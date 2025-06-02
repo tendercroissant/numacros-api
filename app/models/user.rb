@@ -3,6 +3,7 @@ class User < ApplicationRecord
 
   has_many :refresh_tokens, dependent: :destroy
   has_one :user_profile, dependent: :destroy
+  has_many :weights, dependent: :destroy
 
   validates :email, presence: true,
                    uniqueness: { case_sensitive: false },
@@ -11,8 +12,19 @@ class User < ApplicationRecord
                      disposable: Rails.env.production?,
                      disallow_subaddressing: true
                    }
+  validates :password, presence: true, on: :create
 
   before_validation :normalize_email
+
+  # Get the user's current weight
+  def current_weight
+    weights.ordered.first
+  end
+
+  # Get the user's current weight in kg, or nil if no weight recorded
+  def current_weight_kg
+    current_weight&.weight_kg
+  end
 
   private
 

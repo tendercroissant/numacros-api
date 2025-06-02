@@ -13,17 +13,20 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
             name: "John Doe",
             birth_date: "1990-05-15",
             gender: "male",
-            weight_kg: 80.0,
             height_cm: 180,
             unit_system: "metric",
             activity_level: "moderately_active",
             weight_goal_type: "lose_weight",
-            weight_goal_rate: 1.0
+            weight_goal_rate: 1.0,
+            diet_type: "balanced"
           }
         }
       end
 
       it "creates profile and calculates nutrition correctly" do
+        # Create weight entry first (since weights are now separate)
+        create(:weight, user: user, weight_kg: 80.0, recorded_at: Time.current)
+        
         put '/api/v1/profile', params: profile_params, headers: auth_headers, as: :json
         
         expect(response).to have_http_status(:ok)
@@ -32,7 +35,6 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         calculations = profile_data['calculations']
         
         # Verify profile data is stored correctly
-        expect(profile_data['weight_kg']).to eq(80.0)
         expect(profile_data['height_cm']).to eq(180)
         expect(profile_data['gender']).to eq('male')
         expect(profile_data['activity_level']).to eq('moderately_active')
@@ -59,18 +61,22 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
             name: "Jane Smith",
             birth_date: "1995-08-20",
             gender: "female",
-            weight: 140,  # pounds
             height_feet: 5,
             height_inches: 6,
             unit_system: "imperial",
             activity_level: "lightly_active",
             weight_goal_type: "build_muscle",
-            weight_goal_rate: 0.5
+            weight_goal_rate: 0.5,
+            diet_type: "balanced"
           }
         }
       end
 
       it "converts imperial input and calculates nutrition correctly" do
+        # Create weight entry first (since weights are now separate)
+        weight_kg = 140 * 0.453592  # Convert 140 pounds to kg
+        create(:weight, user: user, weight_kg: weight_kg, recorded_at: Time.current)
+        
         put '/api/v1/profile', params: imperial_params, headers: auth_headers, as: :json
         
         expect(response).to have_http_status(:ok)
@@ -79,10 +85,8 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         calculations = profile_data['calculations']
         
         # Verify conversions
-        expected_weight_kg = 140 * 0.453592  # pounds to kg
         expected_height_cm = (5 * 12 + 6) * 2.54  # feet/inches to cm
         
-        expect(profile_data['weight_kg']).to be_within(0.1).of(expected_weight_kg)
         expect(profile_data['height_cm']).to eq(expected_height_cm.round)
         expect(profile_data['unit_system']).to eq('imperial')
         
@@ -94,9 +98,8 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         # Verify calculations use converted metric values (allow for conversion precision)
         age = Date.current.year - 1995
         # Use the actual stored values for precise calculation
-        stored_weight = profile_data['weight_kg']
         stored_height = profile_data['height_cm']
-        expected_bmr = 10 * stored_weight + 6.25 * stored_height - 5 * age - 161  # female formula
+        expected_bmr = 10 * weight_kg + 6.25 * stored_height - 5 * age - 161  # female formula
         expected_tdee = expected_bmr * 1.375  # lightly_active multiplier
         expected_calorie_goal = (expected_tdee + 250).round  # 0.5 lb/week gain
         
@@ -108,7 +111,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
     end
 
     context "updating goals" do
-      let!(:profile) { create(:user_profile, user: user, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
+      let!(:profile) { create(:user_profile, :with_weight, user: user, weight_kg: 70, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
 
       it "recalculates calories when goal changes" do
         # First, get current calculations

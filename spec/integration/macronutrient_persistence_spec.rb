@@ -7,19 +7,21 @@ RSpec.describe 'Macronutrient Persistence Integration', type: :request do
 
   describe 'Profile creation with macronutrient persistence' do
     it 'automatically creates and persists macronutrient targets' do
+      # Create a weight entry first (since weights are now separate)
+      create(:weight, user: user, weight_kg: 75.0, recorded_at: Time.current)
+      
       # Create profile via API
       profile_data = {
         profile: {
           name: "Test User",
           birth_date: "1990-05-15",
           gender: "male",
-          weight_kg: 75,
           height_cm: 180,
           unit_system: "metric",
           activity_level: "moderately_active",
           weight_goal_type: "lose_weight",
           weight_goal_rate: 1.0,
-          dietary_type: "balanced"
+          diet_type: "balanced"
         }
       }
 
@@ -51,7 +53,7 @@ RSpec.describe 'Macronutrient Persistence Integration', type: :request do
   end
 
   describe 'Profile updates with macronutrient recalculation' do
-    let!(:profile) { create(:user_profile, user: user, weight_kg: 70, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
+    let!(:profile) { create(:user_profile, :with_weight, user: user, weight_kg: 70, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
 
     before do
       # Ensure initial target exists
@@ -94,7 +96,7 @@ RSpec.describe 'Macronutrient Persistence Integration', type: :request do
       # Change to keto diet (low carb, high fat)
       update_data = {
         profile: {
-          dietary_type: "keto"
+          diet_type: "keto"
         }
       }
 
@@ -132,42 +134,6 @@ RSpec.describe 'Macronutrient Persistence Integration', type: :request do
       profile.reload
       # Target should not have been updated
       expect(profile.macronutrient_target.updated_at).to eq(initial_updated_at)
-    end
-  end
-
-  describe 'Custom dietary type persistence' do
-    let!(:profile) { create(:user_profile, user: user) }
-
-    it 'persists custom macro percentages correctly' do
-      custom_data = {
-        profile: {
-          dietary_type: "custom",
-          custom_carbs_percent: 45.0,
-          custom_protein_percent: 35.0,
-          custom_fat_percent: 20.0
-        }
-      }
-
-      put '/api/v1/profile', params: custom_data, headers: headers
-      expect(response).to have_http_status(:ok)
-
-      profile.reload
-      target = profile.macronutrient_target
-
-      # Check that custom percentages are reflected in the stored values
-      total_calories = target.calories
-      expected_carbs_calories = (total_calories * 0.45).round
-      expected_protein_calories = (total_calories * 0.35).round
-      expected_fat_calories = (total_calories * 0.20).round
-
-      actual_carbs_calories = target.carbs_grams * 4
-      actual_protein_calories = target.protein_grams * 4
-      actual_fat_calories = target.fat_grams * 9
-
-      # Allow for small rounding differences
-      expect(actual_carbs_calories).to be_within(5).of(expected_carbs_calories)
-      expect(actual_protein_calories).to be_within(5).of(expected_protein_calories)
-      expect(actual_fat_calories).to be_within(5).of(expected_fat_calories)
     end
   end
 end 

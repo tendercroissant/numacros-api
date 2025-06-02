@@ -4,30 +4,23 @@ FactoryBot.define do
     name { "Jane Doe" }
     birth_date { 25.years.ago.to_date }
     gender { :female }
-    weight_kg { 65.0 }
     height_cm { 165 }
     unit_system { :metric }
     activity_level { :moderately_active }
     weight_goal_type { :maintain_weight }
     weight_goal_rate { 0.0 }
-    dietary_type { :balanced }
+    diet_type { :balanced }
 
     trait :male do
       name { "John Doe" }
       gender { :male }
-      weight_kg { 80.0 }
       height_cm { 180 }
     end
 
     trait :female do
       name { "Jane Doe" }
       gender { :female }
-      weight_kg { 65.0 }
       height_cm { 165 }
-    end
-
-    trait :imperial_user do
-      unit_system { :imperial }
     end
 
     trait :lose_weight do
@@ -35,7 +28,7 @@ FactoryBot.define do
       weight_goal_rate { 1.0 }
     end
 
-    trait :build_muscle do
+    trait :gain_weight do
       weight_goal_type { :build_muscle }
       weight_goal_rate { 0.5 }
     end
@@ -45,18 +38,31 @@ FactoryBot.define do
     end
 
     trait :keto do
-      dietary_type { :keto }
+      diet_type { :keto }
     end
 
     trait :high_protein do
-      dietary_type { :high_protein }
+      diet_type { :high_protein }
     end
 
-    trait :custom_macros do
-      dietary_type { :custom }
-      custom_carbs_percent { 45.0 }
-      custom_protein_percent { 35.0 }
-      custom_fat_percent { 20.0 }
+    # Create a default weight entry before creating the profile
+    before(:create) do |profile|
+      create(:weight, user: profile.user, weight_kg: 65.0)
+    end
+
+    trait :imperial_user do
+      unit_system { :imperial }
+    end
+
+    # Helper trait to create a profile with specific weight
+    trait :with_weight do
+      transient do
+        weight_kg { 70.0 }
+      end
+
+      after(:create) do |profile, evaluator|
+        create(:weight, user: profile.user, weight_kg: evaluator.weight_kg)
+      end
     end
   end
 end
