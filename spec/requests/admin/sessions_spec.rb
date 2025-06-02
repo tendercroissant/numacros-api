@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe "Admin::Sessions", type: :request do
-  let(:admin_email) { "admin@example.com" }
-  let(:admin_password) { "supersecret" }
+  let(:admin_email) { Rails.application.config.admin_email }
+  let(:admin_password) { Rails.application.config.admin_password }
 
   let(:valid_credentials) do
     {
@@ -16,13 +16,6 @@ RSpec.describe "Admin::Sessions", type: :request do
       email: "wrong@example.com",
       password: "wrongpassword"
     }
-  end
-
-  before do
-    stub_const("ENV", ENV.to_hash.merge(
-      "ADMIN_EMAIL" => admin_email,
-      "ADMIN_PASSWORD" => admin_password
-    ))
   end
 
   describe "POST /admin/login" do

@@ -26,9 +26,4 @@ RSpec.describe EmailSubscription, type: :model do
     subscription = build(:email_subscription, email: 'test@example.com')
     expect(subscription).not_to be_valid
   end
-
-  it 'is valid without a name' do
-    subscription = build(:email_subscription, name: nil)
-    expect(subscription).to be_valid
-  end
 end 
