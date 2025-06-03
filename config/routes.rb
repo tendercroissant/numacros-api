@@ -13,6 +13,9 @@ Rails.application.routes.draw do
         end
       end
       
+      # Email subscriptions
+      resources :email_subscriptions, only: [:index, :create, :destroy]
+      
       # User-owned resources
       namespace :users do
         # User profile (singular resource)
