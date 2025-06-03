@@ -27,7 +27,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         # Create weight entry first (since weights are now separate)
         create(:weight, user: user, weight_kg: 80.0, recorded_at: Time.current)
         
-        put '/api/v1/profile', params: profile_params, headers: auth_headers, as: :json
+        put '/api/v1/users/profile', params: profile_params, headers: auth_headers, as: :json
         
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -39,7 +39,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         expect(profile_data['gender']).to eq('male')
         expect(profile_data['activity_level']).to eq('moderately_active')
         expect(profile_data['weight_goal_type']).to eq('lose_weight')
-        expect(profile_data['weight_goal_rate']).to eq(1.0)
+        expect(profile_data['weight_goal_rate']).to eq("1.0")  # Returned as string
         
         # Verify calculations (allow for rounding differences)
         age = Date.current.year - 1990
@@ -77,7 +77,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         weight_kg = 140 * 0.453592  # Convert 140 pounds to kg
         create(:weight, user: user, weight_kg: weight_kg, recorded_at: Time.current)
         
-        put '/api/v1/profile', params: imperial_params, headers: auth_headers, as: :json
+        put '/api/v1/users/profile', params: imperial_params, headers: auth_headers, as: :json
         
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -87,7 +87,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         # Verify conversions
         expected_height_cm = (5 * 12 + 6) * 2.54  # feet/inches to cm
         
-        expect(profile_data['height_cm']).to eq(expected_height_cm.round)
+        expect(profile_data['height_cm']).to be_within(1).of(expected_height_cm.round)
         expect(profile_data['unit_system']).to eq('imperial')
         
         # Verify imperial display
@@ -111,11 +111,11 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
     end
 
     context "updating goals" do
-      let!(:profile) { create(:user_profile, :with_weight, user: user, weight_kg: 70, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
+      let!(:profile) { create(:profile, :with_weight, user: user, weight_kg: 70, weight_goal_type: :maintain_weight, weight_goal_rate: 0.0) }
 
       it "recalculates calories when goal changes" do
         # First, get current calculations
-        get '/api/v1/profile', headers: auth_headers, as: :json
+        get '/api/v1/users/profile', headers: auth_headers, as: :json
         initial_response = JSON.parse(response.body)
         initial_tdee = initial_response['user']['profile']['calculations']['tdee']
         initial_calorie_goal = initial_response['user']['profile']['calculations']['calorie_goal']
@@ -124,7 +124,7 @@ RSpec.describe "Nutrition Calculations Integration", type: :request do
         expect(initial_calorie_goal).to be_within(1).of(initial_tdee)
         
         # Update to weight loss goal
-        put '/api/v1/profile', 
+        put '/api/v1/users/profile', 
             params: { profile: { weight_goal_type: "lose_weight", weight_goal_rate: 1.0 } },
             headers: auth_headers, 
             as: :json

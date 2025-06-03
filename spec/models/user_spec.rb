@@ -22,6 +22,9 @@ RSpec.describe User, type: :model do
 
   describe 'associations' do
     it { should have_many(:refresh_tokens).dependent(:destroy) }
+    it { should have_one(:profile).dependent(:destroy) }
+    it { should have_one(:setting).dependent(:destroy) }
+    it { should have_many(:weights).dependent(:destroy) }
   end
 
   describe 'email normalization' do

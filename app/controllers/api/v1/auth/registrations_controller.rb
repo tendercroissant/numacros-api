@@ -3,7 +3,7 @@ module Api
     module Auth
       class RegistrationsController < ApplicationController
         def create
-          @user = User.new(user_params)
+          @user = User.new(auth_registration_params)
 
           if @user.save
             access_token = JwtService.generate_access_token(@user)
@@ -22,8 +22,8 @@ module Api
 
         private
 
-        def user_params
-          params.require(:user).permit(:email, :password, :password_confirmation)
+        def auth_registration_params
+          params.require(:auth_registration).permit(:email, :password, :password_confirmation)
         end
       end
     end

@@ -2,7 +2,8 @@ class User < ApplicationRecord
   has_secure_password
 
   has_many :refresh_tokens, dependent: :destroy
-  has_one :user_profile, dependent: :destroy
+  has_one :profile, dependent: :destroy
+  has_one :setting, dependent: :destroy
   has_many :weights, dependent: :destroy
 
   validates :email, presence: true,

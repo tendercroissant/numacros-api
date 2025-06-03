@@ -1,21 +1,31 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
+      # Authentication resources
       namespace :auth do
-        post 'signup', to: 'registrations#create'
-        post 'login', to: 'sessions#create'
-        post 'refresh_token', to: 'tokens#refresh'
-        delete 'logout_all', to: 'tokens#logout_all'
+        resource :registration, only: [:create]
+        resource :session, only: [:create]
+        resource :token, only: [] do
+          collection do
+            post :refresh_token
+            delete :logout_all
+          end
+        end
       end
       
-      resources :email_subscriptions, only: [:create, :index, :destroy]
-      
-      get 'profile', to: 'profile#show'
-      put 'profile', to: 'profile#update'
-      
-      resources :weights, only: [:index, :create, :destroy] do
-        collection do
-          get :current
+      # User-owned resources
+      namespace :users do
+        # User profile (singular resource)
+        resource :profile, only: [:show, :update]
+        
+        # User settings (singular resource)
+        resource :setting, only: [:show, :update]
+        
+        # User weights (collection resource)
+        resources :weights, only: [:index, :create, :destroy] do
+          collection do
+            get :current
+          end
         end
       end
     end

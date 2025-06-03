@@ -1,4 +1,6 @@
 class RefreshToken < ApplicationRecord
+  self.table_name = 'refresh_tokens'
+
   belongs_to :user
 
   validates :token, presence: true, uniqueness: true
@@ -27,4 +29,4 @@ class RefreshToken < ApplicationRecord
   def set_expiration
     self.expires_at ||= 30.days.from_now
   end
-end
+end 

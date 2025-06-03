@@ -1,4 +1,6 @@
-class Api::V1::WeightsController < ApplicationController
+class Api::V1::Users::WeightsController < ApplicationController
+  include Authenticatable
+  
   before_action :authenticate_user!
   before_action :set_weight, only: [:destroy]
 
@@ -8,8 +10,8 @@ class Api::V1::WeightsController < ApplicationController
     weights_data = weights.map do |weight|
       {
         id: weight.id,
-        weight: weight.weight,
-        date: weight.date,
+        weight_kg: weight.weight_kg,
+        recorded_at: weight.recorded_at,
         created_at: weight.created_at,
         updated_at: weight.updated_at
       }
@@ -28,8 +30,8 @@ class Api::V1::WeightsController < ApplicationController
     if weight.save
       weight_data = {
         id: weight.id,
-        weight: weight.weight,
-        date: weight.date,
+        weight_kg: weight.weight_kg,
+        recorded_at: weight.recorded_at,
         created_at: weight.created_at,
         updated_at: weight.updated_at
       }
@@ -65,8 +67,8 @@ class Api::V1::WeightsController < ApplicationController
     if current_weight
       weight_data = {
         id: current_weight.id,
-        weight: current_weight.weight,
-        date: current_weight.date,
+        weight_kg: current_weight.weight_kg,
+        recorded_at: current_weight.recorded_at,
         created_at: current_weight.created_at,
         updated_at: current_weight.updated_at
       }
@@ -93,6 +95,6 @@ class Api::V1::WeightsController < ApplicationController
   end
 
   def weight_params
-    params.require(:weight).permit(:weight, :date)
+    params.require(:weight).permit(:weight_kg, :recorded_at)
   end
 end 

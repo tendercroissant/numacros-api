@@ -4,4 +4,4 @@ FactoryBot.define do
     token { SecureRandom.uuid }
     expires_at { 30.days.from_now }
   end
-end
+end 

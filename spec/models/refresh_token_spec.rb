@@ -6,8 +6,8 @@ RSpec.describe RefreshToken, type: :model do
   describe 'validations' do
     it 'requires a user' do
       refresh_token = RefreshToken.new
-      expect(refresh_token).to_not be_valid
-      expect(refresh_token.errors[:user]).to be_present
+      expect(refresh_token).not_to be_valid
+      expect(refresh_token.errors[:user]).to include("must exist")
     end
 
     it { should validate_uniqueness_of(:token) }
@@ -23,6 +23,13 @@ RSpec.describe RefreshToken, type: :model do
       expect(refresh_token.token).to be_present
       expect(refresh_token.expires_at).to be_present
     end
+
+    it 'generates a token on creation' do
+      user = create(:user)
+      refresh_token = RefreshToken.new(user: user)
+      refresh_token.valid?
+      expect(refresh_token.token).to be_present
+    end
   end
 
   describe 'associations' do
@@ -30,13 +37,6 @@ RSpec.describe RefreshToken, type: :model do
   end
 
   describe 'callbacks' do
-    it 'generates a token on creation' do
-      user = create(:user)
-      refresh_token = RefreshToken.new(user: user)
-      refresh_token.valid?
-      expect(refresh_token.token).to be_present
-    end
-
     it 'sets expiration to 30 days from now on creation' do
       user = create(:user)
       refresh_token = RefreshToken.new(user: user)
@@ -48,22 +48,18 @@ RSpec.describe RefreshToken, type: :model do
 
   describe 'scopes' do
     let(:user) { create(:user) }
-    
+    let!(:valid_token) { create(:refresh_token, user: user, expires_at: 1.day.from_now) }
+    let!(:expired_token) { create(:refresh_token, user: user, expires_at: 1.day.ago) }
+
     describe '.valid_tokens' do
-      it 'returns tokens that are not expired' do
-        valid_token = create(:refresh_token, user: user, expires_at: 1.hour.from_now)
-        expired_token = create(:refresh_token, user: user, expires_at: 1.hour.ago)
-        
+      it 'returns only non-expired tokens' do
         expect(RefreshToken.valid_tokens).to include(valid_token)
         expect(RefreshToken.valid_tokens).not_to include(expired_token)
       end
     end
 
     describe '.expired_tokens' do
-      it 'returns tokens that are expired' do
-        valid_token = create(:refresh_token, user: user, expires_at: 1.hour.from_now)
-        expired_token = create(:refresh_token, user: user, expires_at: 1.hour.ago)
-        
+      it 'returns only expired tokens' do
         expect(RefreshToken.expired_tokens).to include(expired_token)
         expect(RefreshToken.expired_tokens).not_to include(valid_token)
       end
@@ -83,14 +79,14 @@ RSpec.describe RefreshToken, type: :model do
   end
 
   describe '.cleanup_expired' do
-    it 'deletes expired tokens' do
+    it 'removes expired tokens' do
       user = create(:user)
-      expired_token = create(:refresh_token, user: user, expires_at: 1.hour.ago)
-      valid_token = create(:refresh_token, user: user, expires_at: 1.hour.from_now)
-      
+      valid_token = create(:refresh_token, user: user, expires_at: 1.day.from_now)
+      expired_token = create(:refresh_token, user: user, expires_at: 1.day.ago)
+
       expect { RefreshToken.cleanup_expired }.to change { RefreshToken.count }.by(-1)
       expect(RefreshToken.exists?(expired_token.id)).to be false
       expect(RefreshToken.exists?(valid_token.id)).to be true
     end
   end
-end
+end 

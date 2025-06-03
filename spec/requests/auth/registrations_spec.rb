@@ -1,10 +1,10 @@
 require 'rails_helper'
 
 RSpec.describe "Api::V1::Auth::Registrations", type: :request do
-  describe "POST /api/v1/auth/signup" do
+  describe "POST /api/v1/auth/registration" do
     let(:valid_params) do
       {
-        user: {
+        auth_registration: {
           email: "test@example.com",
           password: "password123",
           password_confirmation: "password123"
@@ -14,7 +14,7 @@ RSpec.describe "Api::V1::Auth::Registrations", type: :request do
 
     let(:invalid_params) do
       {
-        user: {
+        auth_registration: {
           email: "invalid-email",
           password: "short",
           password_confirmation: "different"
@@ -25,18 +25,20 @@ RSpec.describe "Api::V1::Auth::Registrations", type: :request do
     context "with valid parameters" do
       it "creates a new user" do
         expect {
-          post "/api/v1/auth/signup", params: valid_params, as: :json
+          post "/api/v1/auth/registration", params: valid_params, as: :json
         }.to change(User, :count).by(1)
       end
 
-      it "creates a refresh token for the user" do
+      it "creates a refresh token" do
         expect {
-          post "/api/v1/auth/signup", params: valid_params, as: :json
+          post "/api/v1/auth/registration", params: valid_params, as: :json
         }.to change(RefreshToken, :count).by(1)
+        
+        expect(response).to have_http_status(:created)
       end
 
       it "returns success response with tokens" do
-        post "/api/v1/auth/signup", params: valid_params, as: :json
+        post "/api/v1/auth/registration", params: valid_params, as: :json
         
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
@@ -48,7 +50,7 @@ RSpec.describe "Api::V1::Auth::Registrations", type: :request do
       end
 
       it "returns valid JWT access token" do
-        post "/api/v1/auth/signup", params: valid_params, as: :json
+        post "/api/v1/auth/registration", params: valid_params, as: :json
         json_response = JSON.parse(response.body)
         
         decoded_token = JwtService.decode(json_response['access_token'])
@@ -59,12 +61,12 @@ RSpec.describe "Api::V1::Auth::Registrations", type: :request do
     context "with invalid parameters" do
       it "does not create a user" do
         expect {
-          post "/api/v1/auth/signup", params: invalid_params, as: :json
+          post "/api/v1/auth/registration", params: invalid_params, as: :json
         }.not_to change(User, :count)
       end
 
       it "returns error response" do
-        post "/api/v1/auth/signup", params: invalid_params, as: :json
+        post "/api/v1/auth/registration", params: invalid_params, as: :json
         
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -76,7 +78,7 @@ RSpec.describe "Api::V1::Auth::Registrations", type: :request do
       before { create(:user, email: "test@example.com") }
 
       it "returns validation error" do
-        post "/api/v1/auth/signup", params: valid_params, as: :json
+        post "/api/v1/auth/registration", params: valid_params, as: :json
         
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)

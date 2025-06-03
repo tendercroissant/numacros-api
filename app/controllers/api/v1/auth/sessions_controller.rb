@@ -3,9 +3,9 @@ module Api
     module Auth
       class SessionsController < ApplicationController
         def create
-          @user = User.find_by(email: login_params[:email]&.downcase&.strip)
+          @user = User.find_by(email: auth_session_params[:email]&.downcase&.strip)
 
-          if @user&.authenticate(login_params[:password])
+          if @user&.authenticate(auth_session_params[:password])
             access_token = JwtService.generate_access_token(@user)
             refresh_token = @user.refresh_tokens.create!
 
@@ -22,8 +22,8 @@ module Api
 
         private
 
-        def login_params
-          params.require(:user).permit(:email, :password)
+        def auth_session_params
+          params.require(:auth_session).permit(:email, :password)
         end
       end
     end

@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :weight do
-    association :user
+    user
     weight_kg { 70.0 }
     recorded_at { Time.current }
 

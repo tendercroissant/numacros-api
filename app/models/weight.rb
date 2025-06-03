@@ -1,12 +1,23 @@
 class Weight < ApplicationRecord
+  self.table_name = 'weights'
+
   belongs_to :user
 
   validates :weight_kg, presence: true, numericality: { greater_than: 30, less_than: 500 }
   validates :recorded_at, presence: true
   validates :user_id, presence: true
 
+  # Set default date to today if not provided
+  after_initialize :set_default_date, if: :new_record?
+
+  # Order by creation date descending (most recent first)
   scope :ordered, -> { order(recorded_at: :desc) }
   scope :recent, -> { order(recorded_at: :desc).limit(10) }
+
+  # Compatibility method for controllers that might expect this format
+  def weight
+    weight_kg
+  end
 
   # Get the most recent weight for a user
   def self.current_for_user(user)
@@ -29,5 +40,11 @@ class Weight < ApplicationRecord
 
   def self.kg_to_pounds(kg)
     kg * 2.20462
+  end
+
+  private
+
+  def set_default_date
+    self.recorded_at ||= Time.current
   end
 end 

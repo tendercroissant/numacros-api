@@ -4,9 +4,9 @@ module Api
       class TokensController < ApplicationController
         include Authenticatable
         
-        skip_before_action :authenticate_user!, only: [:refresh]
+        skip_before_action :authenticate_user!, only: [:refresh_token]
 
-        def refresh
+        def refresh_token
           refresh_token = params[:refresh_token]
           return render_invalid_token unless refresh_token
 
