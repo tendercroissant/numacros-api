@@ -33,11 +33,5 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
       headers: :any,
       methods: [:post, :options],
       credentials: false
-
-    # Auth endpoints (user authentication)
-    resource '/auth/*',
-      headers: :any,
-      methods: [:post, :delete, :options],
-      credentials: false
   end
 end

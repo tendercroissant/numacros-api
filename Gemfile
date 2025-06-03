@@ -38,9 +38,6 @@ gem "rack-cors"
 # Add valid_email2 gem for comprehensive email validation
 gem 'valid_email2'
 
-# JWT token management
-gem "jwt"
-
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -63,3 +60,5 @@ end
 group :development do
   # No additional gems needed
 end
+
+gem "dockerfile-rails", ">= 1.6", :group => :development
