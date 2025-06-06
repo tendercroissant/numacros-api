@@ -3,6 +3,9 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Email subscriptions
       resources :email_subscriptions, only: [:index, :create, :destroy]
+      # User endpoints
+      get 'me', to: 'me#show'
+      # Authentication endpoints
       post 'register', to: 'authentication#register'
       post 'login', to: 'authentication#login'
       post 'refresh', to: 'authentication#refresh'
