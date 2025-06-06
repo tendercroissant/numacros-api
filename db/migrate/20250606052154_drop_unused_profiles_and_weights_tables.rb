@@ -1,8 +1,8 @@
 class DropUnusedProfilesAndWeightsTables < ActiveRecord::Migration[8.0]
   def up
-    drop_table :profiles
-    drop_table :weights  
-    drop_table :settings
+    drop_table :profiles, if_exists: true
+    drop_table :weights, if_exists: true
+    drop_table :settings, if_exists: true
   end
 
   def down
