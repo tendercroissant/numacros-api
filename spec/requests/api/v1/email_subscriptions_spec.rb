@@ -10,6 +10,8 @@ RSpec.describe "Api::V1::EmailSubscriptions", type: :request do
     }
   end
 
+  let(:admin_email) { ENV["ADMIN_EMAIL"] }
+
   let(:admin_token) do
     verifier = ActiveSupport::MessageVerifier.new(
       Rails.application.secret_key_base,
@@ -17,7 +19,7 @@ RSpec.describe "Api::V1::EmailSubscriptions", type: :request do
     )
     verifier.generate({
       admin: true,
-      email: ENV["ADMIN_EMAIL"],
+      email: admin_email,
       exp: 1.hour.from_now.to_i
     })
   end

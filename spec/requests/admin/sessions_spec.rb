@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe "Admin::Sessions", type: :request do
-  let(:admin_email) { Rails.application.config.admin_email }
-  let(:admin_password) { Rails.application.config.admin_password }
+  let(:admin_email) { ENV["ADMIN_EMAIL"] }
+  let(:admin_password) { ENV["ADMIN_PASSWORD"] }
 
   let(:valid_credentials) do
     {
@@ -31,7 +31,7 @@ RSpec.describe "Admin::Sessions", type: :request do
       it "returns unauthorized status" do
         post "/admin/login", params: invalid_credentials
         expect(response).to have_http_status(:unauthorized)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Invalid credentials" })
+        expect(JSON.parse(response.body)).to eq({ "error" => "Invalid or expired token" })
       end
     end
 
@@ -39,7 +39,7 @@ RSpec.describe "Admin::Sessions", type: :request do
       it "returns unauthorized status" do
         post "/admin/login", params: {}
         expect(response).to have_http_status(:unauthorized)
-        expect(JSON.parse(response.body)).to eq({ "error" => "Invalid credentials" })
+        expect(JSON.parse(response.body)).to eq({ "error" => "Invalid or expired token" })
       end
     end
   end

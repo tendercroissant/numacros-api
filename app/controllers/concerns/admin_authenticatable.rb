@@ -9,17 +9,17 @@ module AdminAuthenticatable
 
   def authenticate_admin!
     token = request.headers["Authorization"]&.split("Bearer ")&.last
-    return head :unauthorized unless token
+    return render json: { error: "Invalid or expired token" }, status: :unauthorized unless token
 
     payload = verifier.verify(token)
 
-    if payload["admin"] && Time.at(payload["exp"]) > Time.now
+    if payload["admin"] && payload["email"] == ENV["ADMIN_EMAIL"] && Time.at(payload["exp"]) > Time.now
       # authenticated
     else
-      head :unauthorized
+      render json: { error: "Invalid or expired token" }, status: :unauthorized
     end
   rescue
-    head :unauthorized
+    render json: { error: "Invalid or expired token" }, status: :unauthorized
   end
 
   def verifier

@@ -2,6 +2,7 @@ module Api
   module V1
     class EmailSubscriptionsController < ApplicationController
       include AdminAuthenticatable
+      skip_before_action :authenticate_user
       skip_before_action :authenticate_admin!, only: [:create]
 
       def index
