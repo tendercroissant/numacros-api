@@ -1,8 +1,21 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :refresh_tokens, dependent: :destroy
+  has_one :user_profile, dependent: :destroy
+  has_one :nutrition_profile, dependent: :destroy
+  has_many :weights, dependent: :destroy
 
-  validates :email, presence: true, email: true, uniqueness: { case_sensitive: false }
+  before_validation :normalize_email
+
+  # Profiles are created manually during registration for better control
+
+  validates :email, presence: true,
+                   uniqueness: { case_sensitive: false },
+                   'valid_email_2/email': {
+                     mx: Rails.env.production?,
+                     disposable: Rails.env.production?,
+                     disallow_subaddressing: false
+                   }
   validates :password, presence: true, length: { minimum: 8 }, on: :create
 
   def generate_tokens(ip_address: nil, user_agent: nil)
@@ -60,5 +73,9 @@ class User < ApplicationRecord
     ENV.fetch('JWT_SECRET_KEY') do
       raise 'JWT_SECRET_KEY environment variable is not set'
     end
+  end
+
+  def normalize_email
+    self.email = email.downcase.strip if email.present?
   end
 end 
